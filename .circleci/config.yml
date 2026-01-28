@@ -1,26 +1,43 @@
 version: 2.1
+
 orbs:
   python: circleci/python@2.1.1
-  heroku: circleci/heroku@1.2.6
   browser-tools: circleci/browser-tools@1.4.8
 
 jobs:
   build_and_test:
-    executor: python/default
     docker:
       - image: cimg/python:3.12.3-browsers
+
     steps:
-      - browser-tools/install-browser-tools
       - checkout
-      - python/install-packages:
-          pkg-manager: pip
-      - run: |
-          pip install --upgrade pip
-          python --version
-          chmod 0755 requirements.txt
-          pip install -r requirements.txt
-          mkdir reports
-          pytest
+
+      - browser-tools/install-browser-tools
+
+      - restore_cache:
+          keys:
+            - pip-cache-{{ checksum "requirements.txt" }}
+
+      - run:
+          name: Install dependencies
+          command: |
+            python --version
+            pip install --upgrade pip
+            pip install -r requirements.txt
+
+      - save_cache:
+          key: pip-cache-{{ checksum "requirements.txt" }}
+          paths:
+            - ~/.cache/pip
+
+      - run:
+          name: Run Pytest
+          command: |
+            mkdir -p reports
+            pytest --junitxml=reports/results.xml
+
+      - store_test_results:
+          path: reports
 
       - store_artifacts:
           path: reports
