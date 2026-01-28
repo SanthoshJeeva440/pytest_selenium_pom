@@ -14,6 +14,12 @@ jobs:
 
       - browser-tools/install-browser-tools
 
+      - run:
+          name: Verify browsers
+          command: |
+            firefox --version
+            google-chrome --version
+
       - restore_cache:
           keys:
             - pip-cache-{{ checksum "requirements.txt" }}
